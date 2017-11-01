@@ -1,13 +1,14 @@
 import React from 'react';
+import { connect } from 'react-redux';
+import { getWeatherData } from './app-redux';
 
 import { Table } from '../components/table-component';
-import weather from '../services/weatherService'; // use dependency injection for this?
 import { DATA_SOURCES } from '../constants/data-sources';
 
-export class App extends React.Component {
+class App extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { dataSource: DATA_SOURCES.OPEN_WEATHER, loading: true, data: null };
+        this.state = { dataSource: DATA_SOURCES.OPEN_WEATHER };
     }
 
     componentWillMount() {
@@ -21,11 +22,7 @@ export class App extends React.Component {
     }
 
     getWeatherData(dataSource) {
-        // this.setState({ loading: true }); -- should really be used, but causes flashing as CSV loads too fast
-        weather.getData(dataSource)
-        .then(data => {
-            this.setState({ data, loading: false });
-        });
+        this.props.getWeatherData(dataSource);
     }
 
     updateData(dataSource) {
@@ -35,21 +32,32 @@ export class App extends React.Component {
     renderButtons() {
         return(
             <div>
-                <button onClick={this.updateData(DATA_SOURCES.OPEN_WEATHER)}>{DATA_SOURCES.OPEN_WEATHER}</button>
-                <button onClick={this.updateData(DATA_SOURCES.CSV)}>{DATA_SOURCES.CSV}</button>
+                <button className={DATA_SOURCES.OPEN_WEATHER} onClick={this.updateData(DATA_SOURCES.OPEN_WEATHER)}>{DATA_SOURCES.OPEN_WEATHER}</button>
+                <button className={DATA_SOURCES.CSV} onClick={this.updateData(DATA_SOURCES.CSV)}>{DATA_SOURCES.CSV}</button>
             </div>
         )
     }
 
     render() {
-        if(this.state.loading) {
+        if(this.props.loading) {
             return <h1>Loading</h1>
         }
         return (
             <div>
                 {this.renderButtons()}
-                <Table data={this.state.data} />
+                <Table data={this.props.data} />
             </div>
         );
     }
 }
+
+const mapStateToProps = (state) => ({
+    data: state.data,
+    loading: state.loading,
+    error: state.error
+});
+
+export default connect(
+    mapStateToProps,
+    { getWeatherData }
+)(App)

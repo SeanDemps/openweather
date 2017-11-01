@@ -4,7 +4,7 @@ import { Row } from './row-component';
 export const Table = (props) => {
     let rows = [];
     props.data.forEach((rowData, i) => {
-       rows.push(<Row key={i} width={'80vw'} { ...rowData } />)
+        rows.push(<Row key={i} width={'80vw'} { ...rowData } />);
     });
     
     return (

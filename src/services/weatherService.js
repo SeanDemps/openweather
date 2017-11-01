@@ -7,7 +7,10 @@ import { kelvinToCelcius } from '../utils/temperature';
 // I would dispatch an action from App container, which would make an API call, then add that to redux store...
 // I would then probably put my 'adapt' functions below into my selectors, before handing over the data as props to the App container
 
-class WeatherService {
+export class WeatherService {
+    constructor(request) {
+        this.request = request;
+    }
 
     getData(dataSource) {
         let data;
@@ -25,7 +28,7 @@ class WeatherService {
     }
 
     _getCsvData() {
-        return request.get('http://localhost:8080/weatherData.csv')
+        return this.request.get('http://localhost:8080/weatherData.csv')
         .then(data => {
             return this._adaptCsvData(data)
         });
@@ -39,43 +42,38 @@ class WeatherService {
             json: true
         };
         
-        return request.get(options)
+        return this.request.get(options)
         .then((data) => {
             return this._adaptOpenWeatherData(data);
         });
     }
 
     _adaptOpenWeatherData(data) {
-        const list = data.list;
-        let accumulatedData = new Map();
-
-        list.forEach(item => {
+        return data.list.reduce((acc, item) => {
             const dateTime = item.dt_txt.split(' ');
             const temperature = item.main.temp;
-            this._accumulateDataByDay(accumulatedData, [...dateTime, temperature]);
-        });
-        return accumulatedData;
+            return this._addDataByDay(acc, [...dateTime, temperature]);
+        }, new Map())
     }
 
     _adaptCsvData(data) {
         const lines = data.split(/\r?\n/);
-        let accumulatedData = new Map();
 
-        lines.forEach(line => {
+        return lines.reduce((acc, line) => {
             const dataArray = line.split(',');
-            this._accumulateDataByDay(accumulatedData, dataArray);
-        });
-        return accumulatedData;
+            return this._addDataByDay(acc, dataArray);
+        }, new Map());
     }
 
-    _accumulateDataByDay(acc, dataArray) {
+    _addDataByDay(dataMap, dataArray) {
         const [date, time, temp] = dataArray;
-        if (!acc.get(date)) {
-            acc.set(date, { date, chunks: []});
+        if (!dataMap.get(date)) {
+            dataMap.set(date, { date, chunks: []});
         }
         let chunk = { time, temp: kelvinToCelcius(temp) };
-        acc.get(date).chunks.push(chunk);
+        dataMap.get(date).chunks.push(chunk);
+        return dataMap;
     }
 }
 
-export default new WeatherService();
+export default new WeatherService(request);
