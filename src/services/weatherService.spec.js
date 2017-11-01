@@ -53,5 +53,9 @@ describe('weatherService', () => {
                 expect(data).to.deep.equal(expectedData);
             });
         });
+        
+        // it('should get data and adapt correctly for csv', () => {
+        //      add mock csv file and use fs readFile to use here and adapt
+        // }
     })
 })
